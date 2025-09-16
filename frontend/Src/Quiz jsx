@@ -1,0 +1,43 @@
+import React, { useEffect, useState } from "react";
+import { getQuestions, submitQuiz } from "./api";
+
+export default function Quiz({ quizId, onFinish }) {
+  const [questions, setQuestions] = useState([]);
+  const [current, setCurrent] = useState(0);
+  const [answers, setAnswers] = useState({});
+
+  useEffect(() => {
+    getQuestions(quizId).then(setQuestions);
+  }, [quizId]);
+
+  if (!questions.length) return <p>Loading...</p>;
+  const q = questions[current];
+
+  const choose = (idx) => setAnswers({ ...answers, [q._id]: idx });
+  const submit = async () => {
+    const arr = Object.entries(answers).map(([questionId, selected]) => ({ questionId, selected }));
+    const res = await submitQuiz(quizId, arr);
+    onFinish(res);
+  };
+
+  return (
+    <div>
+      <h3>{q.questionText}</h3>
+      {q.options.map((opt, i) => (
+        <div key={i}>
+          <input
+            type="radio"
+            checked={answers[q._id] === i}
+            onChange={() => choose(i)}
+          /> {opt}
+        </div>
+      ))}
+      <div>
+        <button onClick={() => setCurrent(c => c-1)} disabled={current===0}>Prev</button>
+        {current < questions.length-1
+          ? <button onClick={() => setCurrent(c => c+1)}>Next</button>
+          : <button onClick={submit}>Submit</button>}
+      </div>
+    </div>
+  );
+}
